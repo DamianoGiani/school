@@ -7,13 +7,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+        matrix:
+          include:
+            - java: 8
+              additional-maven-args:  > 
+               -Pjacoco
+               -DrepoToken=$COVERALLS_REPO_TOKEN 
+               -DpullRequest=${{github.event.pull_request.number}}
+               coveralls:report
+            - java: 11  
+    name: Build with Java ${{ matrix.java}} 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 1.8
+    - name: Set up JDK ${{matrix.java}}
       uses: actions/setup-java@v1
       with:
-        java-version: 1.8
+        java-version: ${{matrix.java}}
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
@@ -21,5 +31,19 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml', '**/*.yml') }}
         restore-keys: ${{ runner.os }}-m2-
     - name: Build with Maven
-      run: mvn verify
-      working-directory: school
+      run:  > 
+          mvn -f myproject/pom.xml 
+          clean verify ${{matrix.additional-maven-args }}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ SECRETS.COVERALLS_TOKEN}}
+      - name: Generate JUnit Report
+        run: >
+          mvn -f myproject/pom.xml
+          surefire-report:report-only site:site -DgenerateReports=false
+        if: ${{ failure() }}  
+      - name: Archive JUnit Report
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}  
+        with:
+          name: surefire-report-jdk-${{matrix.java}}
+          path: '**/target/site'
