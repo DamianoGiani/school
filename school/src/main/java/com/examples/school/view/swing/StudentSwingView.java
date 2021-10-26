@@ -15,6 +15,8 @@ import com.examples.school.model.Student;
 import com.examples.school.view.StudentView;
 import java.awt.GridBagLayout;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
 import java.awt.Insets;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -119,7 +121,11 @@ public class StudentSwingView extends JFrame implements StudentView{
 		btnNewButton = new JButton("Add");
 		btnNewButton.setEnabled(false);
 		btnNewButton.addActionListener(
-				e->schoolController.newStudent(new Student(txtIdtextbox.getText(),textField.getText())));
+				e->new Thread(()->
+					schoolController.newStudent(new Student(txtIdtextbox.getText(),textField.getText()))
+				
+						).start()
+				);
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 			}
@@ -183,16 +189,19 @@ public class StudentSwingView extends JFrame implements StudentView{
 
 	@Override
 	public void showError(String message, Student student) {
+		SwingUtilities.invokeLater(()->{
 		lblErrormessagelabel.setText(message+": "+ student);
 		
-	}
+	});}
 
 	@Override
 	public void studentAdded(Student student) {
+		SwingUtilities.invokeLater(()->{
 		listStudentsModel.addElement(student);
 		resetErrorLabel();
 		
-	}
+	});
+		}
 
 	@Override
 	public void studentRemoved(Student student) {
