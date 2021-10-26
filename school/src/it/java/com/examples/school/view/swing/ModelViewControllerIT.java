@@ -82,8 +82,9 @@ public class ModelViewControllerIT extends AssertJSwingJUnitTestCase {
 		window.list().selectItem(0);
 		window.button(JButtonMatcher.withText("Delete Selected")).click();
 		// verify that the student has been deleted from the db
+		await().atMost(5,TimeUnit.SECONDS).untilAsserted(()->
 		assertThat(studentRepository.findById("99"))
-			.isNull();
+			.isNull());
 	}
 
 }

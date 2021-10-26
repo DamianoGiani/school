@@ -132,8 +132,9 @@ public class StudentSwingViewIT extends AssertJSwingJUnitTestCase {
 		// ...with a student to select
 		window.list().selectItem(0);
 		window.button(JButtonMatcher.withText("Delete Selected")).click();
+		await().atMost(5,TimeUnit.SECONDS).untilAsserted(()->
 		assertThat(window.list().contents())
-			.isEmpty();
+			.isEmpty());
 	}
 
 	@Test @GUITest
@@ -144,6 +145,15 @@ public class StudentSwingViewIT extends AssertJSwingJUnitTestCase {
 			() -> studentSwingView.getListStudentsModel().addElement(student));
 		window.list().selectItem(0);
 		window.button(JButtonMatcher.withText("Delete Selected")).click();
+		pause(
+				new Condition("Error label to contain text") {
+					@Override
+					public boolean test() {
+						return !window.label("errorMessageLabel")
+								.text().trim().isEmpty();
+					}
+				}
+				,timeout(TIMEOUT));
 		assertThat(window.list().contents())
 			.containsExactly(student.toString());
 		window.label("errorMessageLabel")
